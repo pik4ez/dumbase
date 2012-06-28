@@ -1,9 +1,11 @@
 source_host=sourcehost
+source_port=3306
 source_user=user
 source_pass=pass
 source_db=dbname
 
 dest_host=desthost
+dest_port=3306
 dest_user=user
 dest_pass=pass
 dest_db=dbname
@@ -28,10 +30,10 @@ elif [ ! -w $tmp_path ]; then
 else
 	echo "Дамп не найден. Загружаем с сервера ${source_host}."
 
-	dump_cmd="mysqldump -h${source_host} -u${source_user} -p${source_pass} ${source_db}."
+	dump_cmd="mysqldump -h${source_host} -u${source_user} -P${source_port} -p${source_pass} ${source_db}."
 
 	ignore_length=${#ignore[@]}
-	for (( i=0;i<ignore_length;i++)); do
+	for (( i=0;i<ignore_length;i++ )); do
 		dump_cmd=${dump_cmd}" --ignore_table=${source_db}.${ignore[${i}]}"
 	done
 
@@ -44,7 +46,7 @@ fi
 
 echo "Раскатываем дамп на ${dest_host}."
 
-mysql -h${dest_host} -u${dest_user} -p${dest_pass} ${dest_db} < ${tmp_file}
+mysql -h${dest_host} -u${dest_user} -P${dest_port} -p${dest_pass} ${dest_db} < ${tmp_file}
 
 echo "Готово."
 
