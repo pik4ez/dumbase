@@ -10,6 +10,8 @@ import gettext
 
 gettext.install('dumbase', os.getcwd() + '/locale/', unicode=True)
 
+from dumbase.dsn import parse_dsn
+
 import dumbase.mysql
 import dumbase.mysqldump
 
@@ -32,7 +34,7 @@ subparser.add_argument(
     metavar='$dsn',
     help=_(
         'data source name for da target database: '
-        '[$user@]$host[:$port]/$dbname'))
+		'[$user@[:password]]$host[:$port]/$dbname'))
 subparser = subparsers.add_parser(
     'dump',
     help=_('dumping data from $source_dsn into $target_dsn'))
@@ -42,14 +44,14 @@ subparser.add_argument(
     help=_(
         'data source name for the source database '
         '(data will be imported from): '
-        '[$user@]$host[:$port]/$dbname'))
+		'[$user@[:password]]$host[:$port]/$dbname'))
 subparser.add_argument(
     'target_dsn',
     metavar='$target_dsn',
     help=_(
         'data source name for the target database '
         '(data will be exported to): '
-        '[$user@]$host[:$port]/$dbname'))
+		'[$user@[:password]]$host[:$port]/$dbname'))
 # [1.2] аргумент для указания пароля
 # [1.3] аргумент для указания whitelist
 argparser.add_argument(
@@ -81,8 +83,14 @@ args = argparser.parse_args()
 if args.black_all:
     args.black = ['.*']
 
-source_pwd = getdbpass(args.source_dsn)
-tables = dumbase.mysql.list(args.source_dsn, source_pwd)
+# parse source dsn
+source_conn = parse_dsn(args.source_dsn)
+
+# ask for password if not present in dsn
+if source_conn['pwd'] is None:
+    source_conn['pwd'] = getdbpass(args.source_dsn)
+
+tables = dumbase.mysql.list(source_conn)
 tables = dumbase.mysqldump.filter(
     tables, whitelist=args.white, blacklist=args.black)
 
@@ -99,7 +107,7 @@ if args.action == 'dump':
             'you must specify at least one matching --white flag'))
         sys.exit(1)
 
-    cache = dumbase.mysqldump.check_cache(args.source_dsn)
+    cache = dumbase.mysqldump.check_cache(source_conn)
 
     use_cache = False
     if cache:
@@ -112,7 +120,7 @@ if args.action == 'dump':
 
     if not use_cache:
         dump = dumbase.mysqldump.dump(
-            args.source_dsn, source_pwd, tables,
+            source_conn, tables,
             options=[
                 # TODO: комментарии
                 '--quick',
@@ -121,9 +129,15 @@ if args.action == 'dump':
     else:
         dump = cache
 
-    target_pwd = getdbpass(
-        args.target_dsn, tail=_('leave empty if same'), empty=True)
-    if target_pwd == '':
-        target_pwd = source_pwd
+    # parse target dsn
+    target_conn = parse_dsn(args.target_dsn)
 
-    dumbase.mysql.exec_file(args.target_dsn, target_pwd, dump)
+    # ask for password if not present in target_dsn
+    if target_conn['pwd'] is None:
+        target_pwd = getdbpass(args.target_dsn, tail=_('leave empty if same'), empty=True)
+
+    # use source password if target password not set
+    if target_pwd == '':
+        target_pwd = source_conn['pwd']
+
+    dumbase.mysql.exec_file(target_conn, dump)
