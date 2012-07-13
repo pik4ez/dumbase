@@ -61,5 +61,8 @@ class AccessDeniedError(Exception):
 class NoDatabaseSelectedError(Exception):
     pass
 
+class NoPasswordSpecifiedError(Exception):
+    pass
+
 class UnknownError(Exception):
     pass

@@ -132,12 +132,15 @@ if args.action == 'dump':
     # parse target dsn
     target_conn = parse_dsn(args.target_dsn)
 
+    print target_conn
+
     # ask for password if not present in target_dsn
     if target_conn['pwd'] is None:
         target_pwd = getdbpass(args.target_dsn, tail=_('leave empty if same'), empty=True)
 
     # use source password if target password not set
     if target_pwd == '':
-        target_pwd = source_conn['pwd']
+        target_conn['pwd'] = source_conn['pwd']
 
     dumbase.mysql.exec_file(target_conn, dump)
+
