@@ -96,6 +96,30 @@ source_conn = parse_dsn(args.source_dsn)
 if source_conn['pwd'] is None:
     source_conn['pwd'] = getdbpass(args.source_dsn)
 
+# check connection to source and target databases
+source_connected, source_error = dumbase.mysql.check_connection(source_conn)
+if not source_connected:
+    sys.stdout.write(_('failed to connect source database' + '\n'))
+    sys.stdout.write(source_error + '\n')
+    sys.exit(1)
+
+# parse target dsn
+target_conn = parse_dsn(args.target_dsn)
+
+# ask for password if not present in target_dsn
+if target_conn['pwd'] is None:
+    target_conn['pwd'] = getdbpass(args.target_dsn, tail=_('leave empty if same'), empty=True)
+
+# use source password if target password not set
+if target_conn['pwd'] == '':
+    target_conn['pwd'] = source_conn['pwd']
+
+target_connected, target_error = dumbase.mysql.check_connection(target_conn)
+if not target_connected:
+    sys.stdout.write(_('failed to connect target database' + '\n'))
+    sys.stdout.write(target_error + '\n')
+    sys.exit(1)
+
 tables = dumbase.mysql.list(source_conn)
 tables = dumbase.mysqldump.filter(
     tables, whitelist=args.white, blacklist=args.black)
@@ -138,19 +162,6 @@ if args.action == 'dump':
         ] + options)
     else:
         dump = cache
-
-    # parse target dsn
-    target_conn = parse_dsn(args.target_dsn)
-
-    print target_conn
-
-    # ask for password if not present in target_dsn
-    if target_conn['pwd'] is None:
-        target_conn['pwd'] = getdbpass(args.target_dsn, tail=_('leave empty if same'), empty=True)
-
-    # use source password if target password not set
-    if target_conn['pwd'] == '':
-        target_conn['pwd'] = source_conn['pwd']
 
     dumbase.mysql.exec_file(target_conn, dump)
 

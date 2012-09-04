@@ -2,6 +2,31 @@
 
 import subprocess
 
+def check_connection(conn):
+    """Checks connection to database
+
+    Returns:
+    connection status -- bool
+    connection error -- string
+
+    """
+    statement = 'SELECT 1'
+
+    try:
+        result = execute(conn, statement)
+    except UnknownHostError:
+        return False, _('unknown host')
+    except CanNotConnectError:
+        return False, _('failed to connect')
+    except AccessDeniedError:
+        return False, _('access denied')
+    except NoDatabaseSelectedError:
+        return False, _('no database specified')
+    except UnknownError:
+        return False, _('unknown error')
+
+    return True, ''
+
 def list(conn):
     output = execute(conn, 'show tables')
     return output.split('\n')
