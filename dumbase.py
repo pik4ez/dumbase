@@ -99,7 +99,7 @@ if source_conn['pwd'] is None:
 # check connection to source and target databases
 source_connected, source_error = dumbase.mysql.check_connection(source_conn)
 if not source_connected:
-    sys.stdout.write(_('failed to connect source database' + '\n'))
+    sys.stdout.write(_('failed to connect source database') + '\n')
     sys.stdout.write(source_error + '\n')
     sys.exit(1)
 
@@ -116,7 +116,7 @@ if target_conn['pwd'] == '':
 
 target_connected, target_error = dumbase.mysql.check_connection(target_conn)
 if not target_connected:
-    sys.stdout.write(_('failed to connect target database' + '\n'))
+    sys.stdout.write(_('failed to connect target database') + '\n')
     sys.stdout.write(target_error + '\n')
     sys.exit(1)
 
