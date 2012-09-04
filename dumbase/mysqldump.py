@@ -48,6 +48,7 @@ def get_dump_filename(conn):
 def _raw_execute(conn, tables, output, options):
     fd_stdout = open(output, 'w')
     fd_stderr = open(mkstemp()[1], 'r+')
+
     retcode = subprocess.call([
             'mysqldump',
             '-h', conn['host'],

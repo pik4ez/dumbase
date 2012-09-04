@@ -34,7 +34,7 @@ subparser.add_argument(
     metavar='$dsn',
     help=_(
         'data source name for da target database: '
-		'[$user@[:password]]$host[:$port]/$dbname'))
+        '[$user@[:password]]$host[:$port]/$dbname'))
 subparser = subparsers.add_parser(
     'dump',
     help=_('dumping data from $source_dsn into $target_dsn'))
@@ -44,14 +44,14 @@ subparser.add_argument(
     help=_(
         'data source name for the source database '
         '(data will be imported from): '
-		'[$user@[:password]]$host[:$port]/$dbname'))
+        '[$user@[:password]]$host[:$port]/$dbname'))
 subparser.add_argument(
     'target_dsn',
     metavar='$target_dsn',
     help=_(
         'data source name for the target database '
         '(data will be exported to): '
-		'[$user@[:password]]$host[:$port]/$dbname'))
+        '[$user@[:password]]$host[:$port]/$dbname'))
 # [1.2] аргумент для указания пароля
 # [1.3] аргумент для указания whitelist
 argparser.add_argument(
@@ -76,6 +76,12 @@ argparser.add_argument(
     action='store_true',
     help=_(
         'sets to ignore all tables (use --white to specify tables you need)'))
+argparser.add_argument(
+    '--triggers',
+    default=[],
+    action='store_true',
+    help=_(
+        'includes triggers into database dump'))
 # [1.5] аргумент для указания формата даты
 
 args = argparser.parse_args()
@@ -109,6 +115,10 @@ if args.action == 'dump':
 
     cache = dumbase.mysqldump.check_cache(source_conn)
 
+    options = []
+    if args.triggers:
+        options.append('--triggers')
+
     use_cache = False
     if cache:
         use_cache = True
@@ -125,7 +135,7 @@ if args.action == 'dump':
                 # TODO: комментарии
                 '--quick',
                 '--skip-lock-tables'
-        ])
+        ] + options)
     else:
         dump = cache
 
@@ -136,10 +146,10 @@ if args.action == 'dump':
 
     # ask for password if not present in target_dsn
     if target_conn['pwd'] is None:
-        target_pwd = getdbpass(args.target_dsn, tail=_('leave empty if same'), empty=True)
+        target_conn['pwd'] = getdbpass(args.target_dsn, tail=_('leave empty if same'), empty=True)
 
     # use source password if target password not set
-    if target_pwd == '':
+    if target_conn['pwd'] == '':
         target_conn['pwd'] = source_conn['pwd']
 
     dumbase.mysql.exec_file(target_conn, dump)
