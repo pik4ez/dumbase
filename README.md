@@ -32,6 +32,7 @@ dumbase
 
 Пример для локали ru\_RU:
 ```
+cd /path/to/dumbase
 msgfmt -o locale/ru_RU/LC_MESSAGES/dumbase.mo locale/ru_RU/LC_MESSAGES/dumbase.po
 ```
 
