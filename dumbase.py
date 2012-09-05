@@ -1,14 +1,15 @@
 #!/usr/bin/python
-# coding=utf8
+# -*- coding: utf-8 -*-
 
 # [2] добавить русский перевод для строк
 import os
 import argparse
 import sys
 import logging
-import gettext
+import i18n
 
-gettext.install('dumbase', os.getcwd() + '/locale/', unicode=True)
+_ = i18n.language.ugettext
+argparse._ = _
 
 from dumbase.dsn import parse_dsn
 

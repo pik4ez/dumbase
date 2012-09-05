@@ -1,6 +1,9 @@
-# coding=utf8
+# -*- coding: utf-8 -*-
 
 import subprocess
+import i18n
+
+_ = i18n.language.ugettext
 
 def check_connection(conn):
     """Checks connection to database

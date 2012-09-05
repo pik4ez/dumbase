@@ -1,9 +1,12 @@
-# coding=utf8
+# -*- coding: utf-8 -*-
 
 import sys
 import getpass
 import gettext
 import logging
+import i18n
+
+_ = i18n.language.ugettext
 
 prompt = _('Enter password for <{0}> ({1}): ')
 

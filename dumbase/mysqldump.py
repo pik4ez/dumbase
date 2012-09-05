@@ -1,4 +1,4 @@
-# coding=utf8
+# -*- coding: utf-8 -*-
 
 import re
 import tempfile
@@ -6,6 +6,9 @@ import os
 import os.path
 import subprocess
 import logging
+import i18n
+
+_ = i18n.language.ugettext
 
 from tempfile import mkstemp, gettempdir
 
