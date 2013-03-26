@@ -18,6 +18,7 @@ import dumbase.mysqldump
 
 from dumbase.getdbuser import getdbuser
 from dumbase.getdbpass import getdbpass
+from dumbase.args import expand_lists
 
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
 
@@ -58,6 +59,7 @@ subparser.add_argument(
 # [1.3] аргумент для указания whitelist
 argparser.add_argument(
     '--white',
+    '--include',
     default=[],
     metavar='$table',
     action='append',
@@ -66,6 +68,7 @@ argparser.add_argument(
 # [1.4] аргумент для указания blacklist
 argparser.add_argument(
     '--black',
+    '--exclude',
     '--ignore',
     default=[],
     metavar='$table',
@@ -74,6 +77,7 @@ argparser.add_argument(
         'ignores table for dumping (regex)'))
 argparser.add_argument(
     '--black-all',
+    '--exclude-all',
     '--ignore-all',
     action='store_true',
     help=_(
@@ -90,6 +94,12 @@ args = argparser.parse_args()
 
 if args.black_all:
     args.black = ['.*']
+
+# expand lists of tables in --black and --white args
+if args.black:
+    args.black = expand_lists(args.black)
+if args.white:
+    args.white = expand_lists(args.white)
 
 # parse source dsn
 source_conn = parse_dsn(args.source_dsn)
