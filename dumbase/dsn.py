@@ -15,7 +15,7 @@ def parse_dsn(dsn):
     return {
         'host': host,
         'port': port or '3306',
-        'user': user or getpass.getuser(),
+        'user': user or None,
         'pwd': pwd or None,
         'name': name
     }
