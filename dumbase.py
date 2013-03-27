@@ -55,6 +55,14 @@ subparser.add_argument(
         'data source name for the target database '
         '(data will be exported to): '
         '[$user@[:password]]$host[:$port]/$name'))
+# #3 принудительное снятие дампа, даже при наличии кэша
+subparser.add_argument(
+    '--force-redump',
+    '-fr',
+    default='',
+    metavar='$force-redump',
+    help=_(
+        'force to make new dump without request'))
 # [1.2] аргумент для указания пароля
 # [1.3] аргумент для указания whitelist
 argparser.add_argument(
