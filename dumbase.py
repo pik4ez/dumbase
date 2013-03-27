@@ -30,7 +30,7 @@ subparsers = argparser.add_subparsers(dest='action')
 subparser = subparsers.add_parser(
     'list',
     help=_('lists tables from specified $dsn '
-        'using blacklisting and whitelisting'))
+        'using excludelisting and includelisting'))
 # [1.1] аргумент для указания dsn
 subparser.add_argument(
     'source_dsn',
@@ -38,6 +38,28 @@ subparser.add_argument(
     help=_(
         'data source name for da target database: '
         '[$user@[:password]]$host[:$port]/$name'))
+subparser.add_argument(
+    '-i',
+    '--include',
+    default=[],
+    metavar='$table',
+    action='append',
+    help=_(
+        'include table for dumping (regex)'))
+subparser.add_argument(
+    '-e',
+    '--exclude',
+    default=[],
+    metavar='$table',
+    action='append',
+    help=_(
+        'ignores table for dumping (regex)'))
+subparser.add_argument(
+    '-ea',
+    '--exclude-all',
+    action='store_true',
+    help=_(
+        'sets to ignore all tables (use --include to specify tables you need)'))
 subparser = subparsers.add_parser(
     'dump',
     help=_('dumping data from $source_dsn into $target_dsn'))
@@ -55,58 +77,52 @@ subparser.add_argument(
         'data source name for the target database '
         '(data will be exported to): '
         '[$user@[:password]]$host[:$port]/$name'))
-# #3 принудительное снятие дампа, даже при наличии кэша
 subparser.add_argument(
     '--force-redump',
     '-fr',
     action='store_true',
     help=_(
         'force to make new dump without request'))
-# [1.2] аргумент для указания пароля
-# [1.3] аргумент для указания whitelist
-argparser.add_argument(
-    '--white',
+subparser.add_argument(
+    '-i',
     '--include',
     default=[],
     metavar='$table',
     action='append',
     help=_(
-        'white table for dumping (regex)'))
-# [1.4] аргумент для указания blacklist
-argparser.add_argument(
-    '--black',
+        'include table for dumping (regex)'))
+subparser.add_argument(
+    '-e',
     '--exclude',
-    '--ignore',
     default=[],
     metavar='$table',
     action='append',
     help=_(
         'ignores table for dumping (regex)'))
-argparser.add_argument(
-    '--black-all',
+subparser.add_argument(
+    '-ea',
     '--exclude-all',
-    '--ignore-all',
     action='store_true',
     help=_(
-        'sets to ignore all tables (use --white to specify tables you need)'))
-argparser.add_argument(
+        'sets to ignore all tables (use --include to specify tables you need)'))
+subparser.add_argument(
+    '-t',
     '--triggers',
     default=[],
     action='store_true',
     help=_(
-        'includes triggers into database dump'))
-# [1.5] аргумент для указания формата даты
+        'includes triggers into database dump (may require root access'))
 
 args = argparser.parse_args()
 
-if args.black_all:
-    args.black = ['.*']
+if args.exclude_all:
+    args.exclude = ['.*']
 
-# expand lists of tables in --black and --white args
-if args.black:
-    args.black = expand_lists(args.black)
-if args.white:
-    args.white = expand_lists(args.white)
+# expand lists of tables in --exclude and --include args
+if args.exclude:
+    args.exclude = expand_lists(args.exclude)
+if args.include:
+    args.include = expand_lists(args.include)
 
 # parse source dsn
 source_conn = parse_dsn(args.source_dsn)
@@ -126,7 +142,7 @@ if not source_connected:
 
 tables = dumbase.mysql.list(source_conn)
 tables = dumbase.mysqldump.filter(
-    tables, whitelist=args.white, blacklist=args.black)
+    tables, whitelist=args.include, blacklist=args.exclude)
 
 if args.action == 'list':
     if tables == []:
@@ -158,10 +174,10 @@ if args.action == 'dump':
         sys.stdout.write(target_error + '\n')
         sys.exit(1)
 
-    if args.black_all and args.white == []:
+    if args.exclude_all and args.include == []:
         logging.error(_(
-            'if you use --black-all flag, '
-            'you must specify at least one matching --white flag'))
+            'if you use --exclude-all flag, '
+            'you must specify at least one matching --include flag'))
         sys.exit(1)
 
     if args.force_redump == False:
