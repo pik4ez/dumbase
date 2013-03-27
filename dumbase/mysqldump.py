@@ -42,8 +42,9 @@ def get_dump_filename(conn):
     u = re.sub('[^a-z0-9]', '_', conn['user'])
     p = re.sub('[^a-z0-9]', '_', conn['port'])
     h = re.sub('[^a-z0-9]', '_', conn['host'])
+    n = re.sub('[^a-z0-9]', '_', conn['name'])
 
-    filename = u + '_' + h + '_' + p + '.sql'
+    filename = u + '_' + h + '_' + p + '_' + n + '.sql'
     result = os.path.join(gettempdir(), filename)
 
     return result

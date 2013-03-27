@@ -59,8 +59,7 @@ subparser.add_argument(
 subparser.add_argument(
     '--force-redump',
     '-fr',
-    default='',
-    metavar='$force-redump',
+    action='store_true',
     help=_(
         'force to make new dump without request'))
 # [1.2] аргумент для указания пароля
@@ -165,7 +164,10 @@ if args.action == 'dump':
             'you must specify at least one matching --white flag'))
         sys.exit(1)
 
-    cache = dumbase.mysqldump.check_cache(source_conn)
+    if args.force_redump == False:
+        cache = dumbase.mysqldump.check_cache(source_conn)
+    else:
+        cache = False
 
     options = []
     if args.triggers:
