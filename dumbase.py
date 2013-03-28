@@ -78,8 +78,8 @@ subparser.add_argument(
         '(data will be exported to): '
         '[$user@[:password]]$host[:$port]/$name'))
 subparser.add_argument(
+    '-f',
     '--force-redump',
-    '-fr',
     action='store_true',
     help=_(
         'force to make new dump without request'))
@@ -180,7 +180,7 @@ if args.action == 'dump':
             'you must specify at least one matching --include flag'))
         sys.exit(1)
 
-    if args.force_redump == False:
+    if not args.force_redump:
         cache = dumbase.mysqldump.check_cache(source_conn)
     else:
         cache = False
