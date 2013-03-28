@@ -18,7 +18,6 @@ import dumbase.mysqldump
 
 from dumbase.getdbuser import getdbuser
 from dumbase.getdbpass import getdbpass
-from dumbase.args import expand_lists
 
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
 
@@ -44,6 +43,7 @@ subparser.add_argument(
     default=[],
     metavar='$table',
     action='append',
+    nargs='+',
     help=_(
         'include table for dumping (regex)'))
 subparser.add_argument(
@@ -52,11 +52,12 @@ subparser.add_argument(
     default=[],
     metavar='$table',
     action='append',
+    nargs='+',
     help=_(
         'ignores table for dumping (regex)'))
 subparser.add_argument(
-    '-ea',
-    '--exclude-all',
+    '-c',
+    '--clean',
     action='store_true',
     help=_(
         'sets to ignore all tables (use --include to specify tables you need)'))
@@ -89,6 +90,7 @@ subparser.add_argument(
     default=[],
     metavar='$table',
     action='append',
+    nargs='+',
     help=_(
         'include table for dumping (regex)'))
 subparser.add_argument(
@@ -97,14 +99,15 @@ subparser.add_argument(
     default=[],
     metavar='$table',
     action='append',
+    nargs='+',
     help=_(
         'ignores table for dumping (regex)'))
 subparser.add_argument(
-    '-ea',
-    '--exclude-all',
+    '-c',
+    '--clean',
     action='store_true',
     help=_(
-        'sets to ignore all tables (use --include to specify tables you need)'))
+        'ignores all tables (use --include to specify tables you need)'))
 subparser.add_argument(
     '-t',
     '--triggers',
@@ -115,14 +118,11 @@ subparser.add_argument(
 
 args = argparser.parse_args()
 
-if args.exclude_all:
+if args.clean:
     args.exclude = ['.*']
 
-# expand lists of tables in --exclude and --include args
-if args.exclude:
-    args.exclude = expand_lists(args.exclude)
-if args.include:
-    args.include = expand_lists(args.include)
+args.include = [item for sublist in args.include for item in sublist]
+args.exclude = [item for sublist in args.exclude for item in sublist]
 
 # parse source dsn
 source_conn = parse_dsn(args.source_dsn)
@@ -176,7 +176,7 @@ if args.action == 'dump':
 
     if args.exclude_all and args.include == []:
         logging.error(_(
-            'if you use --exclude-all flag, '
+            'if you use --clean flag, '
             'you must specify at least one matching --include flag'))
         sys.exit(1)
 
