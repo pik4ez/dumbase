@@ -8,15 +8,15 @@ import sys
 import logging
 import i18n
 
+from distutils.spawn import find_executable
+
 _ = i18n.language.ugettext
 argparse._ = _
 
-from dumbase.dsn import parse_dsn
-
-import dumbase.requirements
 import dumbase.mysql
 import dumbase.mysqldump
 
+from dumbase.dsn import parse_dsn
 from dumbase.getdbuser import getdbuser
 from dumbase.getdbpass import getdbpass
 
@@ -127,7 +127,7 @@ args.exclude = [item for sublist in args.exclude for item in sublist]
 
 if args.action == 'list':
     # check if mysql client installed
-    if dumbase.requirements.which('mysql') == None:
+    if find_executable('mysql') == None:
         sys.stdout.write(_('ERROR: mysql client not installed, you should install it first') + '\n')
         sys.exit(1)
 
@@ -158,12 +158,12 @@ if args.action == 'list':
 
 if args.action == 'dump':
     # check if mysql client installed
-    if dumbase.requirements.which('mysql') == None:
+    if find_executable('mysql') == None:
         sys.stdout.write(_('ERROR: mysql client not installed, you should install it first') + '\n')
         sys.exit(1)
 
     # check if mysqldump installed
-    if dumbase.requirements.which('mysqldump') == None:
+    if find_executable('mysqldump') == None:
         sys.stdout.write(_('ERROR: mysqldump not installed, you should install it first') + '\n')
         sys.exit(1)
 
