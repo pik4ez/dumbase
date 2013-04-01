@@ -13,6 +13,7 @@ argparse._ = _
 
 from dumbase.dsn import parse_dsn
 
+import dumbase.requirements
 import dumbase.mysql
 import dumbase.mysqldump
 
@@ -124,33 +125,68 @@ if args.clean:
 args.include = [item for sublist in args.include for item in sublist]
 args.exclude = [item for sublist in args.exclude for item in sublist]
 
-# parse source dsn
-source_conn = parse_dsn(args.source_dsn)
-
-# ask for username and password if not present in dsn
-if source_conn['user'] is None:
-    source_conn['user'] = getdbuser(args.source_dsn)
-if source_conn['pwd'] is None:
-    source_conn['pwd'] = getdbpass(args.source_dsn)
-
-# check connection to source and target databases
-source_connected, source_error = dumbase.mysql.check_connection(source_conn)
-if not source_connected:
-    sys.stdout.write(_('failed to connect source database') + '\n')
-    sys.stdout.write(source_error + '\n')
-    sys.exit(1)
-
-tables = dumbase.mysql.list(source_conn)
-tables = dumbase.mysqldump.filter(
-    tables, whitelist=args.include, blacklist=args.exclude)
-
 if args.action == 'list':
+    # check if mysql client installed
+    if dumbase.requirements.which('mysql') == None:
+        sys.stdout.write(_('ERROR: mysql client not installed, you should install it first') + '\n')
+        sys.exit(1)
+
+    # parse source dsn
+    source_conn = parse_dsn(args.source_dsn)
+
+    # ask for username and password if not present in dsn
+    if source_conn['user'] is None:
+        source_conn['user'] = getdbuser(args.source_dsn)
+    if source_conn['pwd'] is None:
+        source_conn['pwd'] = getdbpass(args.source_dsn)
+
+    # check connection to source and target databases
+    source_connected, source_error = dumbase.mysql.check_connection(source_conn)
+    if not source_connected:
+        sys.stdout.write(_('ERROR: failed to connect source database') + '\n')
+        sys.stdout.write(source_error + '\n')
+        sys.exit(1)
+
+    tables = dumbase.mysql.list(source_conn)
+    tables = dumbase.mysqldump.filter(
+        tables, whitelist=args.include, blacklist=args.exclude)
+
     if tables == []:
         sys.stdout.write(_('<no tables>') + '\n')
     for table in tables:
         sys.stdout.write(table + '\n')
 
 if args.action == 'dump':
+    # check if mysql client installed
+    if dumbase.requirements.which('mysql') == None:
+        sys.stdout.write(_('ERROR: mysql client not installed, you should install it first') + '\n')
+        sys.exit(1)
+
+    # check if mysqldump installed
+    if dumbase.requirements.which('mysqldump') == None:
+        sys.stdout.write(_('ERROR: mysqldump not installed, you should install it first') + '\n')
+        sys.exit(1)
+
+    # parse source dsn
+    source_conn = parse_dsn(args.source_dsn)
+
+    # ask for username and password if not present in dsn
+    if source_conn['user'] is None:
+        source_conn['user'] = getdbuser(args.source_dsn)
+    if source_conn['pwd'] is None:
+        source_conn['pwd'] = getdbpass(args.source_dsn)
+
+    # check connection to source and target databases
+    source_connected, source_error = dumbase.mysql.check_connection(source_conn)
+    if not source_connected:
+        sys.stdout.write(_('ERROR: failed to connect source database') + '\n')
+        sys.stdout.write(source_error + '\n')
+        sys.exit(1)
+
+    tables = dumbase.mysql.list(source_conn)
+    tables = dumbase.mysqldump.filter(
+        tables, whitelist=args.include, blacklist=args.exclude)
+
     # parse target dsn
     target_conn = parse_dsn(args.target_dsn)
 
