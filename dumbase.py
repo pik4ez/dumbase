@@ -174,7 +174,7 @@ if args.action == 'dump':
         sys.stdout.write(target_error + '\n')
         sys.exit(1)
 
-    if args.exclude_all and args.include == []:
+    if args.clean and args.include == []:
         logging.error(_(
             'if you use --clean flag, '
             'you must specify at least one matching --include flag'))
