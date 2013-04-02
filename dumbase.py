@@ -1,9 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# PYTHON_ARGCOMPLETE_OK
 
 # [2] добавить русский перевод для строк
 import os
 import argparse
+import argcomplete
 import sys
 import logging
 import i18n
@@ -128,6 +130,8 @@ subparser.add_argument(
     action='store_true',
     help=_(
         'includes triggers into database dump (may require root access'))
+
+argcomplete.autocomplete(argparser)
 
 args = argparser.parse_args()
 
