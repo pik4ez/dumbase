@@ -30,7 +30,7 @@ subparsers = argparser.add_subparsers(dest='action')
 subparser = subparsers.add_parser(
     'list',
     help=_('lists tables from specified $dsn '
-        'using excludelisting and includelisting'))
+        'using whitelist and blacklist'))
 # [1.1] аргумент для указания dsn
 subparser.add_argument(
     'source_dsn',
@@ -60,11 +60,10 @@ subparser.add_argument(
     '-c',
     '--clean',
     action='store_true',
-    help=_(
-        'sets to ignore all tables (use --include to specify tables you need)'))
+    help=_('ignores all tables (use -i to specify tables you need)'))
 subparser = subparsers.add_parser(
     'dump',
-    help=_('dumping data from $source_dsn into $target_dsn'))
+    help=_('dumps data from $source_dsn to $target_dsn'))
 subparser.add_argument(
     'source_dsn',
     metavar='$source_dsn',
@@ -104,6 +103,19 @@ subparser.add_argument(
     help=_(
         'ignores table for dumping (regex)'))
 subparser.add_argument(
+    '-s',
+    '--schema',
+    default=[],
+    metavar='$schema',
+    action='append',
+    nargs='+',
+    help=_(
+        'sets a list of tables for which only schema should be dumped'))
+subparser.add_argument(
+    '--init-schema',
+    action='store_true',
+    help=_('make schema for all tables not included to dump with data'))
+subparser.add_argument(
     '-c',
     '--clean',
     action='store_true',
@@ -119,11 +131,12 @@ subparser.add_argument(
 
 args = argparser.parse_args()
 
+args.include = [item for sublist in args.include for item in sublist]
+
 if args.clean:
     args.exclude = ['.*']
-
-args.include = [item for sublist in args.include for item in sublist]
-args.exclude = [item for sublist in args.exclude for item in sublist]
+else:
+    args.exclude = [item for sublist in args.exclude for item in sublist]
 
 if args.action == 'list':
     # check if mysql client installed
@@ -183,9 +196,13 @@ if args.action == 'dump':
         sys.stdout.write(source_error + '\n')
         sys.exit(1)
 
-    tables = dumbase.mysql.list(source_conn)
-    tables = dumbase.mysqldump.filter(
-        tables, whitelist=args.include, blacklist=args.exclude)
+    # tables_all        all tables existing in source database
+    # tables_data       tables to dump with data
+    # tables_schema     tables to dump without data (schema only)
+
+    tables_all = dumbase.mysql.list(source_conn)
+    tables_data = dumbase.mysqldump.filter(
+        tables_all, whitelist=args.include, blacklist=args.exclude)
 
     # parse target dsn
     target_conn = parse_dsn(args.target_dsn)
@@ -209,6 +226,23 @@ if args.action == 'dump':
         sys.stdout.write(_('failed to connect target database') + '\n')
         sys.stdout.write(target_error + '\n')
         sys.exit(1)
+
+    tables_schema = []
+
+    if args.schema:
+        tables_schema = [item for sublist in args.schema for item in sublist]
+    elif args.init_schema:
+        tables_schema = tables_all
+
+    # do not dump schema for tables included in full dump
+    for x in tables_data:
+        if x in tables_schema:
+            tables_schema.remove(x)
+
+    if tables_schema:
+        logging.info(_('dumping schema for tables: <{0}>').format(', '.join(tables_schema)))
+        schema_dump = dumbase.mysqldump.dump_schema(source_conn, tables_schema)
+        dumbase.mysql.exec_file(target_conn, schema_dump)
 
     if args.clean and args.include == []:
         logging.error(_(
@@ -236,12 +270,11 @@ if args.action == 'dump':
 
     if not use_cache:
         dump = dumbase.mysqldump.dump(
-            source_conn, tables,
+            source_conn, tables_data,
             options=[
-                # TODO: комментарии
                 '--quick',
                 '--skip-lock-tables'
-        ] + options)
+            ] + options)
     else:
         dump = cache
 

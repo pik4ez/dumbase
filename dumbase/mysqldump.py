@@ -12,10 +12,13 @@ _ = i18n.language.ugettext
 
 from tempfile import mkstemp, gettempdir
 
-def dump(conn, tables, options):
+def dump(conn, tables, options, output = None):
     for table in tables:
         logging.info(_('dumping table <{0}>').format(table))
-    output = get_dump_filename(conn)
+    
+    if not output:
+        output = get_dump_filename(conn)
+
     logging.info(_('writing dump into <{0}>').format(output))
     retcode, stderr = _raw_execute(
         conn, tables, output, options)
@@ -23,6 +26,10 @@ def dump(conn, tables, options):
         if re.search('^mysqldump: .* has insufficent privileges', line):
             raise InsufficentPrivilegesError(conn, line)
     return output
+
+def dump_schema(conn, tables):
+    output = get_dump_filename(conn, '-schema')
+    return dump(conn, tables, ['--no-data'], output)
 
 def filter(tables, whitelist=[], blacklist=[]):
     filtered = set()
@@ -37,14 +44,14 @@ def check_cache(conn):
     else:
         return False
 
-def get_dump_filename(conn):
+def get_dump_filename(conn, postfix = ''):
     # OPTIMIZE: rewrite using map to get rid of duplication
     u = re.sub('[^a-z0-9]', '_', conn['user'])
     p = re.sub('[^a-z0-9]', '_', conn['port'])
     h = re.sub('[^a-z0-9]', '_', conn['host'])
     n = re.sub('[^a-z0-9]', '_', conn['name'])
 
-    filename = u + '_' + h + '_' + p + '_' + n + '.sql'
+    filename = u + '_' + h + '_' + p + '_' + n + postfix +'.sql'
     result = os.path.join(gettempdir(), filename)
 
     return result
