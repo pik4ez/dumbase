@@ -1,111 +1,107 @@
 dumbase
 =======
 
-Загружает дамп базы данных с боевого сервера и раскатывает его на среде разработки.
+Creates database dump from one server and uploads it to another server.
 
 
-Возможности
------------
+Features
+--------
 
-* Просмотр списка таблиц в базе данных.
-* Контроль над загружаемыми таблицами (перечисление или исключение).
-* Повторное использование последнего загруженного дампа.
-* Простота локализации.
-* Возможность добавления поддержки других движков баз данных.
-
-
-Установка
----------
-
-1. Загрузить скрипт (`git clone`).
-1. Установить права на выполнение (`chmod +x dumbase.py`).
-1. Сгенерировать бинарные файлы локализации для необходимой локали (см. ниже).
+* List tables in database
+* Whitelisting or blacklisting of tables to be dumped
+* Last dump reusage
+* Easy localization
 
 
-Использование
--------------
+Installation
+------------
 
-### Получение списка таблиц ###
+1. Clone repo (`git clone`)
+1. Allow execution (`chmod +x dumbase.py`)
+1. Generate locale files (see below)
+
+
+Usage
+-----
+
+### List tables ###
 
 ```
 ./dumbase.py list $dsn
-  $dsn  параметры доступа к базе данных в формате [$user@]$host[:$port]/$dbname
+  $dsn  source database DSN [$user@]$host[:$port]/$dbname
 ```
 
-Подробная справка: `dumbase.py list -h`
+Additional help: `dumbase.py list -h`
 
 
-### Загрузка дампа ###
+### Dump ###
 
 ```
 ./dumbase.py dump $source_dsn $target_dsn
-  $source_dsn  параметры доступа к базе, из которой берутся данные
-  $target_dsn  параметры доступа к базе, в которую выгружаются данные
+  $source_dsn  source database DSN
+  $target_dsn  destination database DSN
 ```
 
-Подробная справка: `dumbase.py dump -h`
+Additional help: `dumbase.py dump -h`
 
-#### Полезные плюшки ####
+#### Additional parameters ####
 
-`-e` исключает таблицу или список таблиц (через пробел) из дампа
+`-e` excludes table or a set of tables (separated by space) from dump
 
-`-i` включает таблицу или список таблиц в дамп (полезно при использовании `-c`)
+`-i` includes table or a set of tables into dump (useful with flag `-c`)
 
-`-c` исключает все таблицы из дампа, используется совместно с `-i`
+`-c` excludes all tables from dump, use with flag `-i`
 
-`-t` добавляет триггеры в дамп (могут потребоваться рутовые права)
+`-t` includes triggers into database dump (root access may be required)
 
-`-f` принудительно снимает дамп даже при наличии дампа в кэше
+`-f` force create dump even if there is valid cache
 
-`-s` позволяет указать список таблиц, для которых будет снята только схема,
-без данных
+`-s` list of tables, for which only schema will be dumped
 
-`--init-schema` создаёт пустые таблицы (схему), если эти таблицы исключены
-из полного дампа
+`--init-schema` automatically create schema for tables excluded from dump
 
-#### Примеры ####
+#### Examples ####
 
 `./dumbase.py dump -c -i t1 -- $source $target`
-снимает дамп одной таблицы, `t1`, включая данные
+dumps one table `t1` including data
 
 `./dumbase.py dump -e t2 t3 -- $source $target`
-снимает дамп всех таблиц (с данными), исключая `t2` и `t3`
+dumps all tables with data except `t2` and `t3`
 
 `./dumbase.py dump --init-schema -e t1 t2 -- $source $target`
-снимает дамп с данными для всех таблиц, кроме `t1` и `t2`, создаёт пустые
-таблицы `t1` и `t2` (поскольку они исключены из полного дампа и указан
-параметр `--init-schema`)
+dumps all tables with data except `t1` and `t2`, creates empty tables
+`t1` and `t2` (because they were excluded from dump and `--init-schema`
+flag is set)
 
 `./dumbase.py dump -c -i t1 -s t2 t3 -- $source $target`
-снимает дамп с данными для таблицы `t1`, создаёт пустые таблицы `t2` и `t3`
+dumps table `t1` with data, creates empty tables `t2` and `t3`
 
 `./dumbase.py dump -f $source $target`
-снимает полный дамп с данными, не используя кэш
+dumps all tables with data ignoring cache
 
 
-Генерация файлов локализации
-----------------------------
+Localization files generation
+-----------------------------
 
-В директории `locale/` содержатся файлы локализации в виде текста. Для корректной
-работы механизма локализации необходимо сгенерировать бинарные файлы для соответствующих
-локалей. Можно воспользоваться любыми утилитами, генерирующими бинарные файлы
-в формате .mo из текстовых файлов в формате .po, например, утилитой msgfmt.py.
+Plain text localization files stored in `locale` directory. It is required to generate
+binary files to make localization works. One may use any utility that make .mo files
+from plain text .po files. For example, one may choose msgfmt.py.
 
-Пример для локали ru\_RU:
+Example for ru\_RU locale:
 ```
 cd /path/to/dumbase
 msgfmt -o locale/ru_RU/LC_MESSAGES/dumbase.mo locale/ru_RU/LC_MESSAGES/dumbase.po
 ```
 
 
-Автодополнение
---------------
+Autocomplete
+------------
 
 ```
 pip install argcomplete
 activate-global-python-argcomplete
 ```
 
-Подробности: https://argcomplete.readthedocs.org/en/latest/
+Additional info: https://argcomplete.readthedocs.org/en/latest/
 
 
